@@ -1,26 +1,25 @@
 # Stage 1: Build the React app
-FROM node:16.17.0-alpine as build
+FROM node:20-alpine AS build
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install
-
-# Copy the remaining application code
 COPY . .
 
-# Build the React app
+ARG REACT_APP_GET_TASKS_API_BASE_URL=http://localhost:8001
+ARG REACT_APP_DELETE_TASK_API_BASE_URL=http://localhost:8002
+ARG REACT_APP_CREATE_TASK_API_BASE_URL=http://localhost:8003
+ENV REACT_APP_GET_TASKS_API_BASE_URL=$REACT_APP_GET_TASKS_API_BASE_URL
+ENV REACT_APP_DELETE_TASK_API_BASE_URL=$REACT_APP_DELETE_TASK_API_BASE_URL
+ENV REACT_APP_CREATE_TASK_API_BASE_URL=$REACT_APP_CREATE_TASK_API_BASE_URL
+
 RUN npm run build
 
-# Stage 2: Create a minimal production-ready image
+# Stage 2: Serve the production build
 FROM nginx:alpine
 
-# Copy the built app from the 'build' stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose port 80
 EXPOSE 80
